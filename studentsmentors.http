@@ -16,3 +16,7 @@ Content-Type: application/json
     "area_of_expert" :"Operations Managment",
     "is_premium" :false
 }
+
+###
+GET http://localhost:3001/mentors
+Content-Type: application/json

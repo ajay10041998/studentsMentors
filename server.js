@@ -1,73 +1,78 @@
-const express = require("express")
-const app = express()
-const {open} = require("sqlite")
-const sqlite3 =require("sqlite3")
-const path = require("path")
-const { request } = require("http")
-const dbpath = path.join(__dirname,"studentsMentors.db")
-app.use(express.json())
-let db=null
+const express = require("express");
+const app = express();
+const { open } = require("sqlite");
+const sqlite3 = require("sqlite3");
+const path = require("path");
 
-const intializeServerAndDatabase =async () =>{
-   try {
-    db = await open({
-        filename:dbpath,
-        driver:sqlite3.Database
-    })
-    app.listen(3001,()=>{
-        console.log("server running at port number 3001")
-    })
+const dbpath = path.join(__dirname, "studentsMentors.db");
+app.use(express.json());
 
-}catch(e){
-    console.log(`error message ${e.message}`)
-    process.exit(1)
-}
-}
-intializeServerAndDatabase()
+let db = null;
 
-app.post('/students',async(request,response)=>{
-    const {student_Name,area_of_intrest,availabilty} = request.body
-    const addStudentQuery=`INSERT INTO students 
-    (student_Name,area_of_intrest,availabilty)
-    VALUES
-    (?,?,?)`
-    await db.run(addStudentQuery,[student_Name,area_of_intrest,availabilty])
+const initializeServerAndDatabase = async () => {
     try {
-        response.status(200).send("student add successfully")
+        db = await open({
+            filename: dbpath,
+            driver: sqlite3.Database
+        });
+        app.listen(3001, () => {
+            console.log("Server running at port number 3001");
+        });
+    } catch (e) {
+        console.error(`Error initializing server and database: ${e.message}`);
+        process.exit(1);
     }
-    catch (e) {
-        response.status(400).send({error : `${e.message}`})
-    }
-})
+};
 
-app.post('/mentors',async(request,response)=>{
-    const {mentor_Name,availability,area_of_expert,is_premium} = request.body 
-    const addMentorQuery = `INSERT INTO mentors
-    (mentor_Name,availability,area_of_expert,is_premium)
-    VALUES
-    (?,?,?,?)`
+initializeServerAndDatabase();
 
-    await db.run(addMentorQuery,[mentor_Name,availability,area_of_expert,is_premium])
-    try{
-        response.status(200).send('mentor add successfully')
-    }catch (e){
-        response.status(400).send({error:`${e.message}`})
-    }
-})
+app.post('/students', async (request, response) => {
+    const { student_Name, area_of_intrest, availabilty } = request.body;
+    const addStudentQuery = `
+        INSERT INTO students (student_Name, area_of_intrest, availabilty)
+        VALUES (?, ?, ?)`;
 
-app.get('/mentors/:domain',async (request,response)=>{
-    const {area_of_expert} = request.params
-
-    const selectedDomain = `SELECT * FROM mentors WHERE area_of_expert=?`
-    await db.all(selectedDomain,[area_of_expert])
     try {
-        response.status(200).json(mentors)
-
-    }catch(e){
-        response.status(400).json({error: `${e.message}`})
+        await db.run(addStudentQuery, [student_Name, area_of_intrest, availabilty]);
+        response.status(200).json({ message: "Student added successfully" });
+    } catch (e) {
+        response.status(400).json({ error: e.message });
     }
-})
+});
 
+app.post('/mentors', async (request, response) => {
+    const { mentor_Name, availability, area_of_expert, is_premium } = request.body;
+    const addMentorQuery = `
+        INSERT INTO mentors (mentor_Name, availability, area_of_expert, is_premium)
+        VALUES (?, ?, ?, ?)`;
 
+    try {
+        await db.run(addMentorQuery, [mentor_Name, availability, area_of_expert, is_premium]);
+        response.status(200).json({ message: "Mentor added successfully" });
+    } catch (e) {
+        response.status(400).json({ error: e.message });
+    }
+});
 
+app.get('/mentors', async (request, response) => {
+    const getData = `SELECT * FROM mentors`;
 
+    try {
+        const data = await db.all(getData);
+        response.status(200).json(data);
+    } catch (e) {
+        response.status(400).json({ error: e.message });
+    }
+});
+
+app.get('/mentors/:area_of_expert', async (request, response) => {
+    const { area_of_expert } = request.params;
+    const selectedDomain = `SELECT * FROM mentors WHERE area_of_expert = ?`;
+
+    try {
+        const mentors = await db.all(selectedDomain, [area_of_expert]);
+        response.status(200).json(mentors);
+    } catch (e) {
+        response.status(400).json({ error: e.message });
+    }
+});
