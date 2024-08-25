@@ -5,6 +5,7 @@ const sqlite3 = require("sqlite3");
 const path = require("path");
 
 const dbpath = path.join(__dirname, "studentsMentors.db");
+app.use(cors());
 app.use(express.json());
 
 let db = null;
