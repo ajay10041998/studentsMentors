@@ -3,6 +3,7 @@ const app = express()
 const {open} = require("sqlite")
 const sqlite3 =require("sqlite3")
 const path = require("path")
+const { request } = require("http")
 const dbpath = path.join(__dirname,"studentsMentors.db")
 app.use(express.json())
 let db=null
@@ -51,6 +52,19 @@ app.post('/mentors',async(request,response)=>{
         response.status(200).send('mentor add successfully')
     }catch (e){
         response.status(400).send({error:`${e.message}`})
+    }
+})
+
+app.get('/mentors/:domain',async (request,response)=>{
+    const {area_of_expert} = request.params
+
+    const selectedDomain = `SELECT * FROM mentors WHERE area_of_expert=?`
+    await db.all(selectedDomain,[area_of_expert])
+    try {
+        response.status(200).json(mentors)
+
+    }catch(e){
+        response.status(400).json({error: `${e.message}`})
     }
 })
 
